@@ -1,4 +1,4 @@
-package org.example.project.home
+package com.aidaole.ideepseek.home
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,7 +9,7 @@ import androidx.compose.ui.tooling.preview.Preview
 
 @Preview
 @Composable
-fun AppAndroidPreview() {
+fun AppPreview() {
     App()
 }
 

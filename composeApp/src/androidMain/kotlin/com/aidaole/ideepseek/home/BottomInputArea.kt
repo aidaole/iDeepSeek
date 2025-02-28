@@ -1,4 +1,4 @@
-package org.example.project.home
+package com.aidaole.ideepseek.home
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -51,7 +51,7 @@ import compose.icons.lineawesomeicons.PhotoVideoSolid
 
 @Preview
 @Composable
-fun preview() {
+fun BottomInputAreaPreview() {
     BottomInputArea()
 }
 

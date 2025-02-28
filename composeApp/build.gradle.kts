@@ -22,6 +22,7 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
         }
         commonMain.dependencies {
             implementation(compose.runtime)
