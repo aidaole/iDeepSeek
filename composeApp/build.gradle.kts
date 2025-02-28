@@ -66,5 +66,7 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    implementation(libs.composeIcons.simpleIcons)
+    implementation(libs.composeIcons.lineAwesome)
 }
 
