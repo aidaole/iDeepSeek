@@ -109,8 +109,12 @@ fun FunctionsArea() {
 
 @Composable
 private fun ActionsRow1(
-    actionsRow2Visible: Boolean, onAddClick: () -> Unit
+    actionsRow2Visible: Boolean, 
+    onAddClick: () -> Unit
 ) {
+    var deepThinkSelected by remember { mutableStateOf(false) }
+    var searchSelected by remember { mutableStateOf(false) }
+    
     Row(
         Modifier
             .fillMaxWidth()
@@ -124,14 +128,20 @@ private fun ActionsRow1(
             verticalAlignment = Alignment.CenterVertically
         ) {
             BlueActionButton(
-                icon = LineAwesomeIcons.NetworkWiredSolid, text = "深度思考(R1)"
-            ) { }
+                icon = LineAwesomeIcons.NetworkWiredSolid,
+                text = "深度思考(R1)",
+                selected = deepThinkSelected,
+                onClick = { deepThinkSelected = !deepThinkSelected }
+            )
 
             Spacer(Modifier.width(8.dp))
 
             BlueActionButton(
-                icon = Icons.Default.Search, text = "联网搜索"
-            ) { }
+                icon = Icons.Default.Search,
+                text = "联网搜索",
+                selected = searchSelected,
+                onClick = { searchSelected = !searchSelected }
+            )
         }
 
         // 右侧按钮组
@@ -179,12 +189,17 @@ fun ActionsRow2() {
 
 @Composable
 private fun BlueActionButton(
-    icon: ImageVector, text: String, onClick: () -> Unit
+    icon: ImageVector,
+    text: String,
+    selected: Boolean = false,
+    onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(color = Color(0xFFE3F2FD))
+            .background(
+                color = if (selected) Color(0xFF1565C0) else Color(0xFFE3F2FD)
+            )
             .clickable(onClick = onClick),
     ) {
         Row(
@@ -195,10 +210,14 @@ private fun BlueActionButton(
                 imageVector = icon,
                 contentDescription = text,
                 modifier = Modifier.size(20.dp),
-                tint = Color(0xFF1565C0)
+                tint = if (selected) Color.White else Color(0xFF1565C0)
             )
             Spacer(modifier = Modifier.width(10.dp))
-            Text(text = text, color = Color(0xFF1565C0), style = MaterialTheme.typography.body2)
+            Text(
+                text = text,
+                color = if (selected) Color.White else Color(0xFF1565C0),
+                style = MaterialTheme.typography.body2
+            )
         }
     }
 }
