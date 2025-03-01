@@ -6,15 +6,18 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.aidaole.ideepseek.home.ui.BottomInputArea
+import com.aidaole.ideepseek.home.ui.ChatContent
+import com.aidaole.ideepseek.home.ui.HomeActionBar
 
-@Preview
+@Preview("HomePage")
 @Composable
 fun AppPreview() {
-    App()
+    HomePage()
 }
 
 @Composable
-fun App() {
+fun HomePage() {
     val viewModel = ChatViewModel()
     
     MaterialTheme {

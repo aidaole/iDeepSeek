@@ -1,4 +1,4 @@
-package com.aidaole.ideepseek.home
+package com.aidaole.ideepseek.home.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -43,6 +43,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.aidaole.ideepseek.common.ui.SelectedStateButton
+import com.aidaole.ideepseek.common.ui.VerticalIconTextButton
 import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.CameraSolid
 import compose.icons.lineawesomeicons.File
@@ -155,7 +157,7 @@ private fun ActionsRow1(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BlueActionButton(
+            SelectedStateButton(
                 icon = LineAwesomeIcons.NetworkWiredSolid,
                 text = "深度思考(R1)",
                 selected = deepThinkSelected,
@@ -164,7 +166,7 @@ private fun ActionsRow1(
 
             Spacer(Modifier.width(8.dp))
 
-            BlueActionButton(
+            SelectedStateButton(
                 icon = Icons.Default.Search,
                 text = "联网搜索",
                 selected = searchSelected,
@@ -205,81 +207,15 @@ fun ActionsRow2() {
             .padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         // 拍照识文字按钮
-        ActionButton(icon = LineAwesomeIcons.CameraSolid,
+        VerticalIconTextButton(icon = LineAwesomeIcons.CameraSolid,
             text = "拍照识文字",
             onClick = { /* TODO */ })
         // 图片识文字按钮
-        ActionButton(icon = LineAwesomeIcons.PhotoVideoSolid,
+        VerticalIconTextButton(icon = LineAwesomeIcons.PhotoVideoSolid,
             text = "图片识文字",
             onClick = { /* TODO */ })
         // 文件按钮
-        ActionButton(icon = LineAwesomeIcons.File, text = "文件", onClick = { /* TODO */ })
+        VerticalIconTextButton(icon = LineAwesomeIcons.File, text = "文件", onClick = { /* TODO */ })
     }
 }
 
-
-@Composable
-private fun BlueActionButton(
-    icon: ImageVector,
-    text: String,
-    selected: Boolean = false,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                color = if (selected) Color(0xFF1565C0) else Color(0xFFE3F2FD)
-            )
-            .clickable(onClick = onClick),
-    ) {
-        Row(
-            modifier = Modifier.height(40.dp).padding(vertical = 0.dp, horizontal = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = text,
-                modifier = Modifier.size(20.dp),
-                tint = if (selected) Color.White else Color(0xFF1565C0)
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = text,
-                color = if (selected) Color.White else Color(0xFF1565C0),
-                style = MaterialTheme.typography.body2
-            )
-        }
-    }
-}
-
-@Composable
-private fun ActionButton(
-    icon: ImageVector, text: String, onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(width = 100.dp, height = 60.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFF5F5F5))
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = text,
-                modifier = Modifier.size(24.dp),
-                tint = Color(0xFF666666)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = text, style = MaterialTheme.typography.caption, color = Color(0xFF666666)
-        )
-    }
-}
