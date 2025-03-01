@@ -23,11 +23,13 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun HomeActionBarPreview(){
-    HomeActionBar()
+    HomeActionBar({})
 }
 
 @Composable
-fun HomeActionBar() {
+fun HomeActionBar(
+    onMenuClick: () -> Unit
+) {
     Row(
         Modifier
             .background(color = Color.White)
@@ -37,9 +39,9 @@ fun HomeActionBar() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 左侧设置按钮
-        IconButton(onClick = { /* TODO: 处理设置点击 */ }) {
+        IconButton(onClick = onMenuClick) {
             Icon(
-                Icons.Default.Menu, contentDescription = "设置", tint = Color.Black
+                Icons.Default.Menu, contentDescription = "Menu", tint = Color.Black
             )
         }
 
