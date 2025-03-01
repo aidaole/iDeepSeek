@@ -56,28 +56,46 @@ fun BottomInputAreaPreview() {
 }
 
 @Composable
-fun BottomInputArea() {
+fun BottomInputArea(
+    onSendMessage: (String) -> Unit = {}
+) {
+    var inputText by remember { mutableStateOf("") }
+    var sendBtnEnabled by remember { mutableStateOf(false) }
+    
     Column(
-        Modifier
-            .background(Color.White)
+        modifier = Modifier
             .fillMaxWidth()
+            .background(Color.White)
             .padding(16.dp)
             .imePadding()
     ) {
-        // 输入框
-        InputArea()
+        InputArea(
+            inputText = inputText,
+            onValueChange = {
+                inputText = it
+                sendBtnEnabled = inputText.isNotEmpty()
+            }
+        )
 
-        // 功能按钮行
-        FunctionsArea()
+        FunctionsArea(
+            sendBtnEnabled,
+            onSendClick = {
+                onSendMessage(inputText)
+                inputText = "" // 清空输入
+                sendBtnEnabled = inputText.isNotEmpty()
+            }
+        )
     }
 }
 
 @Composable
-fun InputArea() {
-    var inputText by remember { mutableStateOf("") }
+fun InputArea(
+    inputText: String,
+    onValueChange: (String) -> Unit
+) {
     TextField(
         value = inputText,
-        onValueChange = { inputText = it },
+        onValueChange = onValueChange,
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 36.dp)
@@ -92,10 +110,18 @@ fun InputArea() {
 }
 
 @Composable
-fun FunctionsArea() {
+fun FunctionsArea(
+    sendBtnEnabled: Boolean,
+    onSendClick: () -> Unit
+) {
     var actionsRow2Visible by remember { mutableStateOf(false) }
     Column {
-        ActionsRow1(actionsRow2Visible, onAddClick = { actionsRow2Visible = !actionsRow2Visible })
+        ActionsRow1(
+            actionsRow2Visible = actionsRow2Visible,
+            sendBtnEnabled = sendBtnEnabled,
+            onAddClick = { actionsRow2Visible = !actionsRow2Visible },
+            onSendClick = onSendClick
+        )
 
         AnimatedVisibility(
             visible = actionsRow2Visible,
@@ -109,8 +135,10 @@ fun FunctionsArea() {
 
 @Composable
 private fun ActionsRow1(
-    actionsRow2Visible: Boolean, 
-    onAddClick: () -> Unit
+    actionsRow2Visible: Boolean,
+    sendBtnEnabled: Boolean,
+    onAddClick: () -> Unit,
+    onSendClick: () -> Unit
 ) {
     var deepThinkSelected by remember { mutableStateOf(false) }
     var searchSelected by remember { mutableStateOf(false) }
@@ -146,9 +174,10 @@ private fun ActionsRow1(
 
         // 右侧按钮组
         Row(
-            horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { onAddClick() }) {
+            IconButton(onClick = onAddClick) {
                 Icon(
                     Icons.Default.Add,
                     contentDescription = "添加",
@@ -157,9 +186,11 @@ private fun ActionsRow1(
                 )
             }
 
-            IconButton(onClick = { /* TODO */ }) {
+            IconButton(onClick = onSendClick, enabled = sendBtnEnabled) {
                 Icon(
-                    Icons.Default.Send, contentDescription = "发送", tint = Color.Black
+                    Icons.Default.Send,
+                    contentDescription = "发送",
+                    tint = if (sendBtnEnabled) Color(0xFF1565C0) else Color.Black
                 )
             }
         }
@@ -203,7 +234,7 @@ private fun BlueActionButton(
             .clickable(onClick = onClick),
     ) {
         Row(
-            modifier = Modifier.padding(vertical = 4.dp, horizontal = 10.dp),
+            modifier = Modifier.height(40.dp).padding(vertical = 0.dp, horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(

@@ -15,6 +15,8 @@ fun AppPreview() {
 
 @Composable
 fun App() {
+    val viewModel = ChatViewModel()
+    
     MaterialTheme {
         Column(
             Modifier.fillMaxWidth()
@@ -24,13 +26,16 @@ fun App() {
 
             // 中间聊天内容区域
             ChatContent(
-                Modifier
+                modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
+                messages = viewModel.messages
             )
 
             // 底部输入区域
-            BottomInputArea()
+            BottomInputArea(
+                onSendMessage = viewModel::sendMessage
+            )
         }
     }
 }
