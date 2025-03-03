@@ -59,28 +59,27 @@ class ChatViewModel(
                 val userMessage = ChatMessage(content = content, isUser = true)
                 _messages.add(userMessage)
                 
-                // 构建完整的消息历史
-                val apiMessages = buildMessageHistory() + DeepSeekApi.ChatMessage(
-                    role = "user",
-                    content = content
-                )
+                // 添加一个空的 AI 消息用于流式更新
+                val aiMessage = ChatMessage("", isUser = false)
+                _messages.add(aiMessage)
                 
-                // 调用 API
-                val response = deepSeekApi.chat(
+                // 构建消息历史
+                val apiMessages = buildMessageHistory()
+                
+                // 调用流式 API
+                deepSeekApi.chatStream(
                     messages = apiMessages,
-                    temperature = 0.7f
-                ).getOrThrow()
-
-                Log.d(TAG, "sendMessage: $response")
-
-                // 添加 AI 回复
-                val assistantMessage = response.choices.firstOrNull()?.message?.content
-                if (assistantMessage != null) {
-                    _messages.add(ChatMessage(
-                        content = assistantMessage,
-                        isUser = false
-                    ))
-                }
+                    onResponse = { streamResponse ->
+                        val content = streamResponse.choices.firstOrNull()?.delta?.content
+                        if (content != null) {
+                            // 更新最后一条 AI 消息
+                            val lastIndex = _messages.lastIndex
+                            _messages[lastIndex] = _messages[lastIndex].copy(
+                                content = _messages[lastIndex].content + content
+                            )
+                        }
+                    }
+                )
             } catch (e: Exception) {
                 _uiState.value = UiState.Error("发送消息失败: ${e.message}")
             }
