@@ -54,7 +54,7 @@ fun BottomInputAreaPreview() {
 fun BottomInputArea(
     onSendMessage: (String) -> Unit = {}
 ) {
-    var inputText by remember { mutableStateOf("") }
+    var inputText by remember { mutableStateOf("写一个python的快速排序") }
     var sendBtnEnabled by remember { mutableStateOf(false) }
     
     Column(

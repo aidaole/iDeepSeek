@@ -1,6 +1,7 @@
 package com.aidaole.ideepseek.home.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +11,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.aidaole.ideepseek.home.ChatMessage
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 @Preview
@@ -40,17 +44,11 @@ fun ChatContentPreview() {
 @Composable
 fun ChatContent(
     modifier: Modifier = Modifier,
-    messages: List<ChatMessage> = emptyList()
+    messages: List<ChatMessage>
 ) {
     val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
     
-    // 当消息列表更新时自动滚动到底部
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
-        }
-    }
-
     LazyColumn(
         state = listState,
         modifier = modifier
@@ -62,6 +60,23 @@ fun ChatContent(
     ) {
         items(messages) { message ->
             ChatMessageItem(message)
+        }
+    }
+    
+    // 监听消息变化并滚动到底部
+    LaunchedEffect(messages.size, messages.lastOrNull()?.content) {
+        if (messages.isNotEmpty()) {
+            coroutineScope.launch {
+                delay(100) // 给一点时间让内容更新
+                // 获取当前可见区域的高度
+                val visibleHeight = listState.layoutInfo.viewportEndOffset
+                // 获取整个内容的高度
+                val contentHeight = listState.layoutInfo.totalItemsCount * visibleHeight
+                // 计算需要滚动的距离
+                val scrollDistance = contentHeight - visibleHeight
+                // 平滑滚动
+                listState.animateScrollBy(scrollDistance.toFloat())
+            }
         }
     }
 }
