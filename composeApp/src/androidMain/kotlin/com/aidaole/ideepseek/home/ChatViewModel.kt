@@ -1,9 +1,11 @@
 package com.aidaole.ideepseek.home
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aidaole.ideepseek.api.DeepSeekApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,6 +14,10 @@ import kotlinx.coroutines.launch
 class ChatViewModel(
     private val deepSeekApi: DeepSeekApi
 ) : ViewModel() {
+
+    companion object {
+        private const val TAG = "ChatViewModel"
+    }
     private val _messages = mutableStateListOf<ChatMessage>()
     val messages: List<ChatMessage> = _messages
 
@@ -46,31 +52,59 @@ class ChatViewModel(
 
     fun sendMessage(content: String) {
         if (content.isBlank()) return
-
+        
         viewModelScope.launch {
             try {
                 // 添加用户消息
-                _messages.add(ChatMessage(content = content, isUser = true))
-
+                val userMessage = ChatMessage(content = content, isUser = true)
+                _messages.add(userMessage)
+                
+                // 构建完整的消息历史
+                val apiMessages = buildMessageHistory() + DeepSeekApi.ChatMessage(
+                    role = "user",
+                    content = content
+                )
+                
                 // 调用 API
                 val response = deepSeekApi.chat(
-                    messages = _messages.map {
-                        DeepSeekApi.ChatMessage(
-                            role = if (it.isUser) "user" else "assistant",
-                            content = it.content
-                        )
-                    }
+                    messages = apiMessages,
+                    temperature = 0.7f
                 ).getOrThrow()
 
+                Log.d(TAG, "sendMessage: $response")
+
                 // 添加 AI 回复
-                _messages.add(ChatMessage(
-                    content = response.message.content,
-                    isUser = false
-                ))
+                val assistantMessage = response.choices.firstOrNull()?.message?.content
+                if (assistantMessage != null) {
+                    _messages.add(ChatMessage(
+                        content = assistantMessage,
+                        isUser = false
+                    ))
+                }
             } catch (e: Exception) {
                 _uiState.value = UiState.Error("发送消息失败: ${e.message}")
             }
         }
+    }
+    
+    private fun buildMessageHistory(): List<DeepSeekApi.ChatMessage> {
+        val history = mutableListOf<DeepSeekApi.ChatMessage>()
+        
+        // 添加系统消息
+        history.add(DeepSeekApi.ChatMessage(
+            role = "system",
+            content = "You are a helpful assistant."
+        ))
+        
+        // 添加历史对话
+        _messages.forEach { message ->
+            history.add(DeepSeekApi.ChatMessage(
+                role = if (message.isUser) "user" else "assistant",
+                content = message.content
+            ))
+        }
+        
+        return history
     }
 
     sealed class UiState {

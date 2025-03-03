@@ -24,8 +24,8 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
             implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(libs.composeIcons.simpleIcons)
-            implementation(libs.composeIcons.lineAwesome)
+//            implementation(libs.composeIcons.simpleIcons)
+//            implementation(libs.composeIcons.lineAwesome)
         }
         commonMain.dependencies {
             implementation(compose.runtime)

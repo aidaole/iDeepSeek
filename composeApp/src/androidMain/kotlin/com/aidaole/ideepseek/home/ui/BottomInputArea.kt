@@ -6,23 +6,18 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
@@ -40,16 +35,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.aidaole.ideepseek.common.icon.Add_a_photo
+import com.aidaole.ideepseek.common.icon.Add_photo_alternate
+import com.aidaole.ideepseek.common.icon.Attach_file
+import com.aidaole.ideepseek.common.icon.Network_node
 import com.aidaole.ideepseek.common.ui.SelectedStateButton
 import com.aidaole.ideepseek.common.ui.VerticalIconTextButton
-import compose.icons.LineAwesomeIcons
-import compose.icons.lineawesomeicons.CameraSolid
-import compose.icons.lineawesomeicons.File
-import compose.icons.lineawesomeicons.NetworkWiredSolid
-import compose.icons.lineawesomeicons.PhotoVideoSolid
 
 @Preview
 @Composable
@@ -158,7 +151,7 @@ private fun ActionsRow1(
             verticalAlignment = Alignment.CenterVertically
         ) {
             SelectedStateButton(
-                icon = LineAwesomeIcons.NetworkWiredSolid,
+                icon = Network_node,
                 text = "深度思考(R1)",
                 selected = deepThinkSelected,
                 onClick = { deepThinkSelected = !deepThinkSelected }
@@ -207,15 +200,15 @@ fun ActionsRow2() {
             .padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         // 拍照识文字按钮
-        VerticalIconTextButton(icon = LineAwesomeIcons.CameraSolid,
+        VerticalIconTextButton(icon = Add_a_photo,
             text = "拍照识文字",
             onClick = { /* TODO */ })
         // 图片识文字按钮
-        VerticalIconTextButton(icon = LineAwesomeIcons.PhotoVideoSolid,
+        VerticalIconTextButton(icon = Add_photo_alternate,
             text = "图片识文字",
             onClick = { /* TODO */ })
         // 文件按钮
-        VerticalIconTextButton(icon = LineAwesomeIcons.File, text = "文件", onClick = { /* TODO */ })
+        VerticalIconTextButton(icon = Attach_file, text = "文件", onClick = { /* TODO */ })
     }
 }
 

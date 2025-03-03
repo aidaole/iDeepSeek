@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    kotlin("plugin.serialization") version "1.9.20"
 }
 
 kotlin {
@@ -35,6 +36,12 @@ kotlin {
             
             // Coroutines
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+            
+            // 添加序列化依赖
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+            
+            // Ktor 序列化支持
+            implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
         }
         
         androidMain.dependencies {
