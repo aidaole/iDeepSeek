@@ -1,5 +1,6 @@
 package com.aidaole.ideepseek.home
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,37 +28,73 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.aidaole.ideepseek.api.AndroidDeepSeekApi
+import com.aidaole.ideepseek.api.TokenManager
 import com.aidaole.ideepseek.home.ui.BottomInputArea
 import com.aidaole.ideepseek.home.ui.ChatContent
 import com.aidaole.ideepseek.home.ui.HomeActionBar
+import com.aidaole.ideepseek.home.ui.TokenInputDialog
 import kotlinx.coroutines.launch
 
 @Preview("HomePage")
 @Composable
 fun AppPreview() {
-    HomePage()
+    HomePage(ChatViewModel(AndroidDeepSeekApi(TokenManager(context = Application()))))
 }
 
 @Composable
-fun HomePage() {
-    val viewModel = ChatViewModel()
-    
+fun HomePage(viewModel: ChatViewModel) {
+    // 收集 UI 状态
+    val uiState by viewModel.uiState.collectAsState()
+
+    // 只在需要 Token 时显示对话框
+    if (uiState is ChatViewModel.UiState.NeedToken) {
+        TokenInputDialog(
+            onTokenSubmit = { token ->
+                viewModel.setApiToken(token)
+            },
+            onDismiss = {
+                // 可以选择退出应用,因为没有 token 无法使用
+                // 或者显示提示信息
+            }
+        )
+    }
+
+    // 显示错误消息
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is ChatViewModel.UiState.Error -> {
+                // 显示错误提示
+                // TODO: 实现错误提示 UI
+            }
+
+            else -> {}
+        }
+    }
+
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    
+
     MaterialTheme {
         ModalDrawer(
             modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
             drawerState = drawerState,
             drawerContent = {
                 DrawerContent(
+                    viewModel,
                     onClose = {
                         scope.launch { drawerState.close() }
                     }
@@ -94,8 +131,25 @@ fun HomePage() {
 
 @Composable
 private fun DrawerContent(
+    viewModel: ChatViewModel,
     onClose: () -> Unit
 ) {
+    // 添加对话框显示状态
+    var showTokenDialog by remember { mutableStateOf(false) }
+
+    // 如果showTokenDialog为true，显示对话框
+    if (showTokenDialog) {
+        TokenInputDialog(
+            onTokenSubmit = { token ->
+                viewModel.setApiToken(token)
+                showTokenDialog = false  // 提交后关闭对话框
+            },
+            onDismiss = {
+                showTokenDialog = false  // 关闭对话框
+            }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -138,9 +192,12 @@ private fun DrawerContent(
         )
         DrawerMenuItem(
             icon = Icons.Default.Info,
-            text = "关于"
+            text = "输入apikey",
+            onClick = {
+                showTokenDialog = true  // 点击时显示对话框
+            }
         )
-        
+
         Spacer(modifier = Modifier.height(30.dp))
     }
 }

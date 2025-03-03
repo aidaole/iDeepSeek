@@ -27,7 +27,23 @@ kotlin {
     
     sourceSets {
         commonMain.dependencies {
-            // put your Multiplatform dependencies here
+            // Ktor
+            implementation("io.ktor:ktor-client-core:2.3.7")
+            implementation("io.ktor:ktor-client-json:2.3.7")
+            implementation("io.ktor:ktor-client-serialization:2.3.7")
+            implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
+            
+            // Coroutines
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+        }
+        
+        androidMain.dependencies {
+            implementation("io.ktor:ktor-client-android:2.3.7")
+            implementation("androidx.security:security-crypto:1.1.0-alpha06")
+        }
+        
+        iosMain.dependencies {
+            implementation("io.ktor:ktor-client-ios:2.3.7")
         }
     }
 }
