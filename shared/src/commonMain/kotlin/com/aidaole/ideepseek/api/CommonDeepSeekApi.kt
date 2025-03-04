@@ -26,7 +26,6 @@ class CommonDeepSeekApi(
         isLenient = true // 可选：宽松解析
     }
     private val dbManager = ChatDatabaseManager(dbFactory)
-    private var currentSessionId: Long? = null
 
     override suspend fun setApiToken(token: String) {
         tokenManager.saveToken(token)
@@ -41,6 +40,7 @@ class CommonDeepSeekApi(
     }
 
     override suspend fun chatStream(
+        currentSessionId: Long,
         messages: List<DeepSeekApi.ChatMessage>,
         model: String,
         temperature: Float,
@@ -49,14 +49,12 @@ class CommonDeepSeekApi(
         onResponse: (DeepSeekApi.StreamResponse) -> Unit
     ) {
         // 如果是新对话（没有当前会话ID），才创建新的会话
-        if (currentSessionId == null) {
-            currentSessionId = dbManager.createChatSession(messages.last().content.take(50))
+        val sessionId = if (currentSessionId == 0L) {
+            dbManager.getSessionList().size.toLong()
+        } else {
+            currentSessionId
         }
-        
-        // 保存用户消息（只保存最新的消息）
-        val sessionId = currentSessionId!!
         dbManager.addMessage(sessionId, messages.last().role, messages.last().content)
-
         val token = tokenManager.getToken() ?: throw IllegalStateException("API Token not set")
 
         val request = DeepSeekApi.ChatRequest(
@@ -112,10 +110,5 @@ class CommonDeepSeekApi(
                 }
             }
         }
-    }
-
-    // 添加清除当前会话的方法
-    fun clearCurrentSession() {
-        currentSessionId = null
     }
 }

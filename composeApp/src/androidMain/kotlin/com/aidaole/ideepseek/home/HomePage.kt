@@ -82,18 +82,6 @@ fun HomePage(viewModel: ChatViewModel) {
         )
     }
 
-    // 显示错误消息
-    LaunchedEffect(tokenState) {
-        when (tokenState) {
-            is ChatViewModel.TokenState.Error -> {
-                // 显示错误提示
-                // TODO: 实现错误提示 UI
-            }
-
-            else -> {}
-        }
-    }
-
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 

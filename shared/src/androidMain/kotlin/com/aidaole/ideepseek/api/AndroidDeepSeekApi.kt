@@ -37,6 +37,7 @@ class AndroidDeepSeekApi(private val tokenManager: TokenManager, private val con
     }
 
     override suspend fun chatStream(
+        currentSessionId: Long,
         messages: List<DeepSeekApi.ChatMessage>,
         model: String,
         temperature: Float,
@@ -44,6 +45,6 @@ class AndroidDeepSeekApi(private val tokenManager: TokenManager, private val con
         maxTokens: Int,
         onResponse: (DeepSeekApi.StreamResponse) -> Unit
     ) = commonDeepSeekApi.chatStream(
-        messages, model, temperature, topP, maxTokens, onResponse
+        currentSessionId, messages, model, temperature, topP, maxTokens, onResponse
     )
 }

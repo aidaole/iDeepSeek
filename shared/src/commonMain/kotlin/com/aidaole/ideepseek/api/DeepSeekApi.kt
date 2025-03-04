@@ -12,6 +12,7 @@ interface DeepSeekApi {
 
     // 添加新的流式聊天方法
     suspend fun chatStream(
+        currentSessionId: Long,
         messages: List<ChatMessage>,
         model: String = "deepseek-chat",
         temperature: Float = 0.7f,

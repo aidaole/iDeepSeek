@@ -19,9 +19,7 @@ class ChatDatabaseManager(databaseDriverFactory: DatabaseDriverFactory) {
     }
 
     suspend fun addMessage(
-        sessionId: Long,
-        role: String,
-        content: String
+        sessionId: Long, role: String, content: String
     ) = withContext(Dispatchers.Default) {
         dbQuery.insertChatMessage(
             session_id = sessionId,
@@ -31,16 +29,16 @@ class ChatDatabaseManager(databaseDriverFactory: DatabaseDriverFactory) {
         )
     }
 
+    fun getSessionList(): List<ChatSession> {
+        return dbQuery.getAllSessions().executeAsList()
+    }
+
     fun getAllSessions(): Flow<List<ChatSession>> {
-        return dbQuery.getAllSessions()
-            .asFlow()
-            .mapToList(Dispatchers.Default)
+        return dbQuery.getAllSessions().asFlow().mapToList(Dispatchers.Default)
     }
 
     fun getSessionMessages(sessionId: Long): Flow<List<ChatMessage>> {
-        return dbQuery.getSessionMessages(sessionId)
-            .asFlow()
-            .mapToList(Dispatchers.Default)
+        return dbQuery.getSessionMessages(sessionId).asFlow().mapToList(Dispatchers.Default)
     }
 
     suspend fun deleteChatSession(sessionId: Long) = withContext(Dispatchers.Default) {

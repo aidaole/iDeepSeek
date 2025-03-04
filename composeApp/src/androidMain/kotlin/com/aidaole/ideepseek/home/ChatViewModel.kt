@@ -30,6 +30,8 @@ class ChatViewModel(
     private val _chatSessions = MutableStateFlow<List<ChatSession>>(emptyList())
     val chatSessions: StateFlow<List<ChatSession>> = _chatSessions.asStateFlow()
 
+    private var currentSessionId = 0L
+
     init {
         viewModelScope.launch {
             try {
@@ -80,6 +82,7 @@ class ChatViewModel(
 
                 // 调用流式 API
                 api.chatStream(
+                    currentSessionId,
                     model = if (!isDeepThink) "deepseek-chat" else "deepseek-reasoner",
                     messages = apiMessages,
                     onResponse = { streamResponse ->
@@ -127,6 +130,7 @@ class ChatViewModel(
                     ChatMessage(it.content, it.role=="user")
                 }
                 _messages.addAll(messages)
+                currentSessionId = sessionId
             }
         }
     }
@@ -134,9 +138,10 @@ class ChatViewModel(
     // 创建新会话
     fun createNewChat() {
         _messages.clear()
-        if (api is CommonDeepSeekApi) {
-            api.clearCurrentSession()
-        }
+//        viewModelScope.launch {
+//            currentSessionId = dbManager.getSessionList().size.toLong()
+//        }
+        currentSessionId = 0L
     }
 
     sealed class TokenState {

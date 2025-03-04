@@ -22,7 +22,7 @@ class IosDeepSeekApi(private val tokenManager: TokenManager) : DeepSeekApi {
         install(ContentNegotiation) {
             json(customJson)
         }
-        
+
         // iOS 特定的配置
         engine {
             configureRequest {
@@ -48,6 +48,7 @@ class IosDeepSeekApi(private val tokenManager: TokenManager) : DeepSeekApi {
     }
 
     override suspend fun chatStream(
+        currentSessionId: Long,
         messages: List<DeepSeekApi.ChatMessage>,
         model: String,
         temperature: Float,
@@ -55,6 +56,6 @@ class IosDeepSeekApi(private val tokenManager: TokenManager) : DeepSeekApi {
         maxTokens: Int,
         onResponse: (DeepSeekApi.StreamResponse) -> Unit
     ) = commonDeepSeekApi.chatStream(
-        messages, model, temperature, topP, maxTokens, onResponse
+        currentSessionId, messages, model, temperature, topP, maxTokens, onResponse
     )
 } 
