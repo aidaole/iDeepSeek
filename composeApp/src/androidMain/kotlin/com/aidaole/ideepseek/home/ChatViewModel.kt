@@ -1,11 +1,9 @@
 package com.aidaole.ideepseek.home
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aidaole.ideepseek.api.DeepSeekApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,20 +19,20 @@ class ChatViewModel(
     private val _messages = mutableStateListOf<ChatMessage>()
     val messages: List<ChatMessage> = _messages
 
-    private val _uiState = MutableStateFlow<UiState>(UiState.Initial)
-    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+    private val _tokenState = MutableStateFlow<TokenState>(TokenState.Initial)
+    val tokenState: StateFlow<TokenState> = _tokenState.asStateFlow()
 
     init {
         viewModelScope.launch {
             try {
                 val token = deepSeekApi.getApiToken()
                 if (token != null) {
-                    _uiState.value = UiState.TokenSet
+                    _tokenState.value = TokenState.TokenSet
                 } else {
-                    _uiState.value = UiState.NeedToken
+                    _tokenState.value = TokenState.NeedToken
                 }
             } catch (e: Exception) {
-                _uiState.value = UiState.Error("获取 Token 失败: ${e.message}")
+                _tokenState.value = TokenState.Error("获取 Token 失败: ${e.message}")
             }
         }
     }
@@ -43,9 +41,9 @@ class ChatViewModel(
         viewModelScope.launch {
             try {
                 deepSeekApi.setApiToken(token)
-                _uiState.value = UiState.TokenSet
+                _tokenState.value = TokenState.TokenSet
             } catch (e: Exception) {
-                _uiState.value = UiState.Error("设置 Token 失败: ${e.message}")
+                _tokenState.value = TokenState.Error("设置 Token 失败: ${e.message}")
             }
         }
     }
@@ -81,7 +79,7 @@ class ChatViewModel(
                     }
                 )
             } catch (e: Exception) {
-                _uiState.value = UiState.Error("发送消息失败: ${e.message}")
+                _tokenState.value = TokenState.Error("发送消息失败: ${e.message}")
             }
         }
     }
@@ -106,10 +104,10 @@ class ChatViewModel(
         return history
     }
 
-    sealed class UiState {
-        object Initial : UiState()
-        object NeedToken : UiState()
-        object TokenSet : UiState()
-        data class Error(val message: String) : UiState()
+    sealed class TokenState {
+        data object Initial : TokenState()
+        data object NeedToken : TokenState()
+        data object TokenSet : TokenState()
+        data class Error(val message: String) : TokenState()
     }
 }

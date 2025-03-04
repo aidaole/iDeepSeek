@@ -58,10 +58,10 @@ fun AppPreview() {
 @Composable
 fun HomePage(viewModel: ChatViewModel) {
     // 收集 UI 状态
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.tokenState.collectAsState()
 
     // 只在需要 Token 时显示对话框
-    if (uiState is ChatViewModel.UiState.NeedToken) {
+    if (uiState is ChatViewModel.TokenState.NeedToken) {
         TokenInputDialog(
             onTokenSubmit = { token ->
                 viewModel.setApiToken(token)
@@ -76,7 +76,7 @@ fun HomePage(viewModel: ChatViewModel) {
     // 显示错误消息
     LaunchedEffect(uiState) {
         when (uiState) {
-            is ChatViewModel.UiState.Error -> {
+            is ChatViewModel.TokenState.Error -> {
                 // 显示错误提示
                 // TODO: 实现错误提示 UI
             }
