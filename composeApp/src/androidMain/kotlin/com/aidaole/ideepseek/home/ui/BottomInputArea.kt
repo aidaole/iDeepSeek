@@ -52,10 +52,11 @@ fun BottomInputAreaPreview() {
 
 @Composable
 fun BottomInputArea(
-    onSendMessage: (String) -> Unit = {}
+    onSendMessage: (String, Boolean) -> Unit = { content: String, isDeepThink: Boolean -> },
 ) {
     var inputText by remember { mutableStateOf("写一个python的快速排序") }
     var sendBtnEnabled by remember { mutableStateOf(false) }
+    var isDeepThink by remember { mutableStateOf(false) }
     
     Column(
         modifier = Modifier
@@ -74,14 +75,18 @@ fun BottomInputArea(
 
         FunctionsArea(
             sendBtnEnabled,
+            onDeepThinkSelected = { isDeepThinkSelected ->
+                isDeepThink = isDeepThinkSelected
+            },
             onSendClick = {
-                onSendMessage(inputText)
+                onSendMessage(inputText, isDeepThink)
                 inputText = "" // 清空输入
                 sendBtnEnabled = inputText.isNotEmpty()
             }
         )
     }
 }
+
 
 @Composable
 fun InputArea(
@@ -107,13 +112,15 @@ fun InputArea(
 @Composable
 fun FunctionsArea(
     sendBtnEnabled: Boolean,
-    onSendClick: () -> Unit
+    onSendClick: () -> Unit,
+    onDeepThinkSelected: (Boolean) -> Unit
 ) {
     var actionsRow2Visible by remember { mutableStateOf(false) }
     Column {
         ActionsRow1(
             actionsRow2Visible = actionsRow2Visible,
             sendBtnEnabled = sendBtnEnabled,
+            onDeepThinkSelected,
             onAddClick = { actionsRow2Visible = !actionsRow2Visible },
             onSendClick = onSendClick
         )
@@ -132,6 +139,7 @@ fun FunctionsArea(
 private fun ActionsRow1(
     actionsRow2Visible: Boolean,
     sendBtnEnabled: Boolean,
+    onDeepThinkSelected: (Boolean) -> Unit,
     onAddClick: () -> Unit,
     onSendClick: () -> Unit
 ) {
@@ -154,7 +162,10 @@ private fun ActionsRow1(
                 icon = Network_node,
                 text = "深度思考(R1)",
                 selected = deepThinkSelected,
-                onClick = { deepThinkSelected = !deepThinkSelected }
+                onClick = {
+                    deepThinkSelected = !deepThinkSelected
+                    onDeepThinkSelected.invoke(deepThinkSelected)
+                }
             )
 
             Spacer(Modifier.width(8.dp))

@@ -1,5 +1,6 @@
 package com.aidaole.ideepseek.home
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,6 +17,7 @@ class ChatViewModel(
     companion object {
         private const val TAG = "ChatViewModel"
     }
+
     private val _messages = mutableStateListOf<ChatMessage>()
     val messages: List<ChatMessage> = _messages
 
@@ -48,59 +50,61 @@ class ChatViewModel(
         }
     }
 
-    fun sendMessage(content: String) {
+    fun sendMessage(content: String, isDeepThink: Boolean) {
         if (content.isBlank()) return
-        
+
         viewModelScope.launch {
             try {
                 // 添加用户消息
                 val userMessage = ChatMessage(content = content, isUser = true)
                 _messages.add(userMessage)
-                
+
                 // 添加一个空的 AI 消息用于流式更新
                 val aiMessage = ChatMessage("", isUser = false)
                 _messages.add(aiMessage)
-                
+
                 // 构建消息历史
                 val apiMessages = buildMessageHistory()
-                
+
                 // 调用流式 API
                 deepSeekApi.chatStream(
+                    model = if (!isDeepThink) "deepseek-chat" else "deepseek-reasoner",
                     messages = apiMessages,
                     onResponse = { streamResponse ->
                         val content = streamResponse.choices.firstOrNull()?.delta?.content
+                        val reasoningContent =
+                            streamResponse.choices.firstOrNull()?.delta?.reasoningContent
                         if (content != null) {
                             // 更新最后一条 AI 消息
                             val lastIndex = _messages.lastIndex
                             _messages[lastIndex] = _messages[lastIndex].copy(
                                 content = _messages[lastIndex].content + content
                             )
+                        } else if (reasoningContent != null) {
+                            val lastIndex = _messages.lastIndex
+                            _messages[lastIndex] = _messages[lastIndex].copy(
+                                content = _messages[lastIndex].content + reasoningContent
+                            )
                         }
-                    }
-                )
+                    })
             } catch (e: Exception) {
                 _tokenState.value = TokenState.Error("发送消息失败: ${e.message}")
             }
         }
     }
-    
+
     private fun buildMessageHistory(): List<DeepSeekApi.ChatMessage> {
         val history = mutableListOf<DeepSeekApi.ChatMessage>()
-        
-        // 添加系统消息
-        history.add(DeepSeekApi.ChatMessage(
-            role = "system",
-            content = "You are a helpful assistant."
-        ))
-        
         // 添加历史对话
-        _messages.forEach { message ->
-            history.add(DeepSeekApi.ChatMessage(
-                role = if (message.isUser) "user" else "assistant",
-                content = message.content
-            ))
+        _messages.filter {
+            it.content.isNotEmpty()
+        }.forEach { message ->
+            history.add(
+                DeepSeekApi.ChatMessage(
+                    role = if (message.isUser) "user" else "assistant", content = message.content
+                )
+            )
         }
-        
         return history
     }
 

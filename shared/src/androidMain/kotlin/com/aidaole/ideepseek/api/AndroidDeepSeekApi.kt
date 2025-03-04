@@ -15,12 +15,13 @@ class AndroidDeepSeekApi(private val tokenManager: TokenManager) : DeepSeekApi {
     companion object {
         private const val TAG = "AndroidDeepSeekApi"
     }
+    private val customJson = Json {
+        ignoreUnknownKeys = true
+        isLenient = true // 可选：宽松解析
+    }
     private val client = HttpClient(Android) {
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                isLenient = true
-            })
+            json(customJson)
         }
     }
 
@@ -109,7 +110,7 @@ class AndroidDeepSeekApi(private val tokenManager: TokenManager) : DeepSeekApi {
                             val json = content.substring(6).trim() // 去掉 "data: " 前缀
                             if (json == "[DONE]") break
                             try {
-                                val streamResponse = Json.decodeFromString<DeepSeekApi.StreamResponse>(json)
+                                val streamResponse = customJson.decodeFromString<DeepSeekApi.StreamResponse>(json)
                                 onResponse(streamResponse)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Parse error: $json", e)

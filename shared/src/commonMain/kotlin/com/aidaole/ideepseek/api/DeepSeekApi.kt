@@ -87,11 +87,14 @@ interface DeepSeekApi {
 
     @Serializable
     data class DeltaMessage(
-        val role: String? = null, val content: String? = null
+        val role: String? = null,
+        val content: String? = null,
+        @SerialName("reasoning_content")
+        val reasoningContent: String? = null
     )
 
     @Serializable
-    data class Usage (
+    data class Usage(
         @SerialName("prompt_tokens")
         val promptTokens: Long,
 
@@ -112,7 +115,7 @@ interface DeepSeekApi {
     )
 
     @Serializable
-    data class PromptTokensDetails (
+    data class PromptTokensDetails(
         @SerialName("cached_tokens")
         val cachedTokens: Long
     )
