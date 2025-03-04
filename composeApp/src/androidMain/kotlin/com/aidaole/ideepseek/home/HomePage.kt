@@ -185,11 +185,7 @@ private fun DrawerContent(
         Spacer(
             modifier = Modifier.weight(1F)
         )
-
-        DrawerMenuItem(
-            icon = Icons.Default.Settings,
-            text = "设置"
-        )
+        
         DrawerMenuItem(
             icon = Icons.Default.Info,
             text = "输入apikey",
