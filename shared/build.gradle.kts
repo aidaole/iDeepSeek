@@ -5,13 +5,15 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     kotlin("plugin.serialization") version "1.9.20"
+    id("app.cash.sqldelight") version "2.0.1"
 }
 
 kotlin {
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "11"
+            }
         }
     }
     
@@ -42,16 +44,27 @@ kotlin {
             
             // Ktor 序列化支持
             implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+            
+            // SQLDelight
+            implementation("app.cash.sqldelight:runtime:2.0.1")
+            implementation("app.cash.sqldelight:coroutines-extensions:2.0.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
         }
         
         androidMain.dependencies {
             implementation("io.ktor:ktor-client-android:2.3.7")
             implementation("androidx.security:security-crypto:1.1.0-alpha06")
+            
+            // SQLDelight
+            implementation("app.cash.sqldelight:android-driver:2.0.1")
         }
         
         iosMain.dependencies {
             implementation("io.ktor:ktor-client-ios:2.3.7")
             implementation("io.ktor:ktor-client-darwin:2.3.7")
+            
+            // SQLDelight
+            implementation("app.cash.sqldelight:native-driver:2.0.1")
         }
     }
 }
@@ -65,5 +78,13 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+    }
+}
+
+sqldelight {
+    databases {
+        create("ChatDatabase") {
+            packageName.set("com.aidaole.ideepseek.db")
+        }
     }
 }

@@ -10,16 +10,6 @@ interface DeepSeekApi {
     suspend fun getApiToken(): String?
     suspend fun clearApiToken()
 
-    // Chat 相关
-    suspend fun chat(
-        messages: List<ChatMessage>,
-        model: String = "deepseek-chat",
-        temperature: Float = 0.7f,
-        topP: Float = 0.7f,
-        maxTokens: Int = 2048,
-        stream: Boolean = true
-    ): Result<ChatResponse>
-
     // 添加新的流式聊天方法
     suspend fun chatStream(
         messages: List<ChatMessage>,

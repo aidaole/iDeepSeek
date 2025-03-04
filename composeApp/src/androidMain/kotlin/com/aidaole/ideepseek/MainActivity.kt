@@ -14,15 +14,17 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.aidaole.ideepseek.home.HomePage
 import com.aidaole.ideepseek.api.TokenManager
 import com.aidaole.ideepseek.api.AndroidDeepSeekApi
+import com.aidaole.ideepseek.db.ChatDatabaseManager
+import com.aidaole.ideepseek.db.DatabaseDriverFactory
 import com.aidaole.ideepseek.home.ChatViewModel
 
 class MainActivity : ComponentActivity() {
     private val tokenManager by lazy { TokenManager(applicationContext) }
-    private val api by lazy { AndroidDeepSeekApi(tokenManager) }
+    private val api by lazy { AndroidDeepSeekApi(tokenManager, applicationContext) }
     private val chatViewModel by viewModels<ChatViewModel> {
         object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return ChatViewModel(api) as T
+                return ChatViewModel(api, ChatDatabaseManager(DatabaseDriverFactory(applicationContext))) as T
             }
         }
     }

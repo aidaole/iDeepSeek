@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Divider
 import androidx.compose.material.DrawerValue
 import androidx.compose.material.Icon
@@ -25,7 +27,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.aidaole.ideepseek.api.AndroidDeepSeekApi
@@ -47,21 +49,28 @@ import com.aidaole.ideepseek.home.ui.BottomInputArea
 import com.aidaole.ideepseek.home.ui.ChatContent
 import com.aidaole.ideepseek.home.ui.HomeActionBar
 import com.aidaole.ideepseek.home.ui.TokenInputDialog
+import com.aidaole.ideepseek.db.ChatDatabaseManager
+import com.aidaole.ideepseek.db.ChatSession
+import com.aidaole.ideepseek.db.DatabaseDriverFactory
 import kotlinx.coroutines.launch
 
 @Preview("HomePage")
 @Composable
 fun AppPreview() {
-    HomePage(ChatViewModel(AndroidDeepSeekApi(TokenManager(context = Application()))))
+    val context = Application()
+    val tokenManager = TokenManager(context)
+    val dbManager = ChatDatabaseManager(DatabaseDriverFactory(context))
+    val api = AndroidDeepSeekApi(tokenManager, context)
+    HomePage(ChatViewModel(api, dbManager))
 }
 
 @Composable
 fun HomePage(viewModel: ChatViewModel) {
     // 收集 UI 状态
-    val uiState by viewModel.tokenState.collectAsState()
+    val tokenState by viewModel.tokenState.collectAsState()
 
     // 只在需要 Token 时显示对话框
-    if (uiState is ChatViewModel.TokenState.NeedToken) {
+    if (tokenState is ChatViewModel.TokenState.NeedToken) {
         TokenInputDialog(
             onTokenSubmit = { token ->
                 viewModel.setApiToken(token)
@@ -74,8 +83,8 @@ fun HomePage(viewModel: ChatViewModel) {
     }
 
     // 显示错误消息
-    LaunchedEffect(uiState) {
-        when (uiState) {
+    LaunchedEffect(tokenState) {
+        when (tokenState) {
             is ChatViewModel.TokenState.Error -> {
                 // 显示错误提示
                 // TODO: 实现错误提示 UI
@@ -107,6 +116,9 @@ fun HomePage(viewModel: ChatViewModel) {
             ) {
                 // 顶部ActionBar
                 HomeActionBar(
+                    onNewChatClick = {
+                        viewModel.createNewChat()
+                    },
                     onMenuClick = {
                         scope.launch { drawerState.open() }
                     }
@@ -149,6 +161,7 @@ private fun DrawerContent(
             }
         )
     }
+    val chatSessions by viewModel.chatSessions.collectAsState(initial = emptyList())
 
     Column(
         modifier = Modifier
@@ -182,9 +195,21 @@ private fun DrawerContent(
             color = Color.LightGray
         )
 
-        Spacer(
-            modifier = Modifier.weight(1F)
-        )
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            items(chatSessions) { session ->
+                ChatSessionItem(
+                    session = session,
+                    onClick = {
+                        viewModel.loadChatSession(session.id)
+                        onClose()
+                    }
+                )
+            }
+        }
         
         DrawerMenuItem(
             icon = Icons.Default.Info,
@@ -195,6 +220,28 @@ private fun DrawerContent(
         )
 
         Spacer(modifier = Modifier.height(30.dp))
+    }
+}
+
+@Composable
+private fun ChatSessionItem(
+    session: ChatSession,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = session.title,
+            style = MaterialTheme.typography.body1,
+            color = Color.Black,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

@@ -1,5 +1,6 @@
 package com.aidaole.ideepseek.api
 
+import com.aidaole.ideepseek.db.DatabaseDriverFactory
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.darwin.Darwin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -32,7 +33,7 @@ class IosDeepSeekApi(private val tokenManager: TokenManager) : DeepSeekApi {
     }
 
     // 使用通用实现
-    private val commonDeepSeekApi = CommonDeepSeekApi(tokenManager, client)
+    private val commonDeepSeekApi = CommonDeepSeekApi(tokenManager, client, DatabaseDriverFactory())
 
     override suspend fun setApiToken(token: String) {
         commonDeepSeekApi.setApiToken(token)
@@ -45,17 +46,6 @@ class IosDeepSeekApi(private val tokenManager: TokenManager) : DeepSeekApi {
     override suspend fun clearApiToken() {
         commonDeepSeekApi.clearApiToken()
     }
-
-    override suspend fun chat(
-        messages: List<DeepSeekApi.ChatMessage>,
-        model: String,
-        temperature: Float,
-        topP: Float,
-        maxTokens: Int,
-        stream: Boolean
-    ): Result<DeepSeekApi.ChatResponse> = commonDeepSeekApi.chat(
-        messages, model, temperature, topP, maxTokens, stream
-    )
 
     override suspend fun chatStream(
         messages: List<DeepSeekApi.ChatMessage>,

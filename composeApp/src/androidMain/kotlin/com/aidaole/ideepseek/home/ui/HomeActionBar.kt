@@ -23,12 +23,15 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun HomeActionBarPreview(){
-    HomeActionBar({})
+    HomeActionBar({}) {
+
+    }
 }
 
 @Composable
 fun HomeActionBar(
-    onMenuClick: () -> Unit
+    onMenuClick: () -> Unit,
+    onNewChatClick: () -> Unit
 ) {
     Row(
         Modifier
@@ -51,7 +54,7 @@ fun HomeActionBar(
         )
 
         // 右侧新建聊天按钮
-        IconButton(onClick = { /* TODO: 处理新建聊天点击 */ }) {
+        IconButton(onClick = onNewChatClick) {
             Icon(
                 Icons.Default.Add, contentDescription = "新建聊天", tint = Color.Black
             )

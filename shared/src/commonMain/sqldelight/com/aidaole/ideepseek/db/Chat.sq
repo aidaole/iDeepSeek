@@ -1,0 +1,46 @@
+CREATE TABLE ChatSession (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+);
+
+CREATE TABLE ChatMessage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (session_id) REFERENCES ChatSession(id) ON DELETE CASCADE
+);
+
+-- 插入新的聊天会话
+insertChatSession:
+INSERT INTO ChatSession (title, created_at)
+VALUES (?, ?);
+
+-- 插入新的聊天消息
+insertChatMessage:
+INSERT INTO ChatMessage (session_id, role, content, created_at)
+VALUES (?, ?, ?, ?);
+
+-- 获取所有聊天会话，按时间倒序
+getAllSessions:
+SELECT *
+FROM ChatSession
+ORDER BY created_at DESC;
+
+-- 获取指定会话的所有消息
+getSessionMessages:
+SELECT *
+FROM ChatMessage
+WHERE session_id = ?
+ORDER BY created_at ASC;
+
+-- 删除聊天会话（级联删除消息）
+deleteChatSession:
+DELETE FROM ChatSession
+WHERE id = ?;
+
+-- 获取最后插入的行ID
+lastInsertRowId:
+SELECT last_insert_rowid(); 

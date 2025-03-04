@@ -1,12 +1,14 @@
 package com.aidaole.ideepseek.api
 
+import android.content.Context
+import com.aidaole.ideepseek.db.DatabaseDriverFactory
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-class AndroidDeepSeekApi(private val tokenManager: TokenManager) : DeepSeekApi {
+class AndroidDeepSeekApi(private val tokenManager: TokenManager, private val context: Context) : DeepSeekApi {
     companion object {
         private const val TAG = "AndroidDeepSeekApi"
     }
@@ -20,7 +22,7 @@ class AndroidDeepSeekApi(private val tokenManager: TokenManager) : DeepSeekApi {
         }
     }
 
-    private val commonDeepSeekApi = CommonDeepSeekApi(tokenManager, client)
+    private val commonDeepSeekApi = CommonDeepSeekApi(tokenManager, client, DatabaseDriverFactory(context))
 
     override suspend fun setApiToken(token: String) {
         commonDeepSeekApi.setApiToken(token)

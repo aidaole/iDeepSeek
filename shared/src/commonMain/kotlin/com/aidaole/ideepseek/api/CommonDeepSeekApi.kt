@@ -1,5 +1,7 @@
 package com.aidaole.ideepseek.api
 
+import com.aidaole.ideepseek.db.ChatDatabaseManager
+import com.aidaole.ideepseek.db.DatabaseDriverFactory
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.header
@@ -14,14 +16,17 @@ import io.ktor.http.contentType
 import kotlinx.serialization.json.Json
 
 class CommonDeepSeekApi(
-    val tokenManager: TokenManager,
-    val client: HttpClient
+    private val tokenManager: TokenManager,
+    private val httpClient: HttpClient,
+    private val dbFactory: DatabaseDriverFactory
 ): DeepSeekApi {
     private val apiUrl = "https://api.deepseek.com/v1/chat/completions"
     private val customJson = Json {
         ignoreUnknownKeys = true
         isLenient = true // 可选：宽松解析
     }
+    private val dbManager = ChatDatabaseManager(dbFactory)
+    private var currentSessionId: Long? = null
 
     override suspend fun setApiToken(token: String) {
         tokenManager.saveToken(token)
@@ -35,35 +40,6 @@ class CommonDeepSeekApi(
         tokenManager.clearToken()
     }
 
-    override suspend fun chat(
-        messages: List<DeepSeekApi.ChatMessage>,
-        model: String,
-        temperature: Float,
-        topP: Float,
-        maxTokens: Int,
-        stream: Boolean
-    ): Result<DeepSeekApi.ChatResponse> = runCatching {
-        val token = tokenManager.getToken() ?: throw IllegalStateException("API Token not set")
-
-        // 构建请求体
-        val request = DeepSeekApi.ChatRequest(
-            model = model,
-            messages = messages,
-            temperature = temperature,
-            top_p = topP,
-            max_tokens = maxTokens,
-            stream = stream
-        )
-
-        val response = client.post(apiUrl) {
-            contentType(ContentType.Application.Json)
-            header(HttpHeaders.Authorization, "Bearer $token")
-            setBody(request)
-        }
-        println("Response status: ${response.status}")  // 日志
-        response.body<DeepSeekApi.ChatResponse>()
-    }
-
     override suspend fun chatStream(
         messages: List<DeepSeekApi.ChatMessage>,
         model: String,
@@ -72,6 +48,15 @@ class CommonDeepSeekApi(
         maxTokens: Int,
         onResponse: (DeepSeekApi.StreamResponse) -> Unit
     ) {
+        // 如果是新对话（没有当前会话ID），才创建新的会话
+        if (currentSessionId == null) {
+            currentSessionId = dbManager.createChatSession(messages.last().content.take(50))
+        }
+        
+        // 保存用户消息（只保存最新的消息）
+        val sessionId = currentSessionId!!
+        dbManager.addMessage(sessionId, messages.last().role, messages.last().content)
+
         val token = tokenManager.getToken() ?: throw IllegalStateException("API Token not set")
 
         val request = DeepSeekApi.ChatRequest(
@@ -83,7 +68,8 @@ class CommonDeepSeekApi(
             stream = true
         )
 
-        client.preparePost(apiUrl) {
+        val assistantMessage = StringBuilder()
+        httpClient.preparePost(apiUrl) {
             headers {
                 append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
                 append(HttpHeaders.Authorization, "Bearer $token")
@@ -97,26 +83,39 @@ class CommonDeepSeekApi(
                     println("chatStream: $line")
 
                     if (line.isBlank()) {
-                        // 处理缓冲区中的数据
                         val content = buffer.toString()
                         buffer.clear()
 
                         if (content.startsWith("data: ")) {
-                            val json = content.substring(6).trim() // 去掉 "data: " 前缀
-                            if (json == "[DONE]") break
+                            val json = content.substring(6).trim()
+                            if (json == "[DONE]") {
+                                // 当对话完成时保存完整的助手回复
+                                dbManager.addMessage(sessionId, "assistant", assistantMessage.toString())
+                                break
+                            }
                             try {
                                 val streamResponse = customJson.decodeFromString<DeepSeekApi.StreamResponse>(json)
+                                // 累积助手的回复
+                                streamResponse.choices.forEach { choice ->
+                                    choice.delta.content?.let {
+                                        assistantMessage.append(it)
+                                    }
+                                }
                                 onResponse(streamResponse)
                             } catch (e: Exception) {
                                 println("Parse error: $json, $e")
                             }
                         }
                     } else {
-                        // 累积数据到缓冲区
                         buffer.append(line)
                     }
                 }
             }
         }
+    }
+
+    // 添加清除当前会话的方法
+    fun clearCurrentSession() {
+        currentSessionId = null
     }
 }

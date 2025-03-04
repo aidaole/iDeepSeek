@@ -1,17 +1,20 @@
 package com.aidaole.ideepseek.home
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aidaole.ideepseek.api.DeepSeekApi
+import com.aidaole.ideepseek.api.CommonDeepSeekApi
+import com.aidaole.ideepseek.db.ChatDatabaseManager
+import com.aidaole.ideepseek.db.ChatSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
-    private val deepSeekApi: DeepSeekApi
+    private val api: DeepSeekApi,
+    private val dbManager: ChatDatabaseManager
 ) : ViewModel() {
 
     companion object {
@@ -24,10 +27,13 @@ class ChatViewModel(
     private val _tokenState = MutableStateFlow<TokenState>(TokenState.Initial)
     val tokenState: StateFlow<TokenState> = _tokenState.asStateFlow()
 
+    private val _chatSessions = MutableStateFlow<List<ChatSession>>(emptyList())
+    val chatSessions: StateFlow<List<ChatSession>> = _chatSessions.asStateFlow()
+
     init {
         viewModelScope.launch {
             try {
-                val token = deepSeekApi.getApiToken()
+                val token = api.getApiToken()
                 if (token != null) {
                     _tokenState.value = TokenState.TokenSet
                 } else {
@@ -37,12 +43,18 @@ class ChatViewModel(
                 _tokenState.value = TokenState.Error("获取 Token 失败: ${e.message}")
             }
         }
+
+        viewModelScope.launch {
+            dbManager.getAllSessions().collect { sessions ->
+                _chatSessions.value = sessions
+            }
+        }
     }
 
     fun setApiToken(token: String) {
         viewModelScope.launch {
             try {
-                deepSeekApi.setApiToken(token)
+                api.setApiToken(token)
                 _tokenState.value = TokenState.TokenSet
             } catch (e: Exception) {
                 _tokenState.value = TokenState.Error("设置 Token 失败: ${e.message}")
@@ -67,7 +79,7 @@ class ChatViewModel(
                 val apiMessages = buildMessageHistory()
 
                 // 调用流式 API
-                deepSeekApi.chatStream(
+                api.chatStream(
                     model = if (!isDeepThink) "deepseek-chat" else "deepseek-reasoner",
                     messages = apiMessages,
                     onResponse = { streamResponse ->
@@ -106,6 +118,25 @@ class ChatViewModel(
             )
         }
         return history
+    }
+
+    fun loadChatSession(sessionId: Long) {
+        viewModelScope.launch {
+            dbManager.getSessionMessages(sessionId).collect { chatMessages ->
+                val messages = chatMessages.map {
+                    ChatMessage(it.content, it.role=="user")
+                }
+                _messages.addAll(messages)
+            }
+        }
+    }
+
+    // 创建新会话
+    fun createNewChat() {
+        _messages.clear()
+        if (api is CommonDeepSeekApi) {
+            api.clearCurrentSession()
+        }
     }
 
     sealed class TokenState {
