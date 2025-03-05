@@ -102,8 +102,12 @@ fun HomePage(viewModel: ChatViewModel) {
             Column(
                 Modifier.fillMaxWidth()
             ) {
+                // 收集当前标题状态
+                val currentTitle by viewModel.currentTitle.collectAsState()
+                
                 // 顶部ActionBar
                 HomeActionBar(
+                    title = currentTitle,
                     onNewChatClick = {
                         viewModel.createNewChat()
                     },

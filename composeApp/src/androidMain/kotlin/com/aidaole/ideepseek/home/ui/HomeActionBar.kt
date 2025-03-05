@@ -23,13 +23,12 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 @Preview
 fun HomeActionBarPreview(){
-    HomeActionBar({}) {
-
-    }
+    HomeActionBar("新对话", {}, {})
 }
 
 @Composable
 fun HomeActionBar(
+    title: String,
     onMenuClick: () -> Unit,
     onNewChatClick: () -> Unit
 ) {
@@ -50,7 +49,7 @@ fun HomeActionBar(
 
         // 中间标题
         Text(
-            "新对话", color = Color.Black, style = MaterialTheme.typography.body1
+            title, color = Color.Black, style = MaterialTheme.typography.body1
         )
 
         // 右侧新建聊天按钮

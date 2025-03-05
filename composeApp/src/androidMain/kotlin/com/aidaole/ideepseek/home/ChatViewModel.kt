@@ -31,6 +31,9 @@ class ChatViewModel(
     private val _chatSessions = MutableStateFlow<List<ChatSession>>(emptyList())
     val chatSessions: StateFlow<List<ChatSession>> = _chatSessions.asStateFlow()
 
+    private val _currentTitle = MutableStateFlow<String>("新对话")
+    val currentTitle: StateFlow<String> = _currentTitle.asStateFlow()
+
     private var currentSessionId = 0L
 
     init {
@@ -102,6 +105,7 @@ class ChatViewModel(
                 if (_messages.size == 1) {
                     val title = content.take(10) + if (content.length > 10) "..." else ""
                     dbManager.updateSessionTitle(currentSessionId, title)
+                    _currentTitle.value = title
                 }
 
                 // 添加一个空的 AI 消息用于流式更新
@@ -165,6 +169,11 @@ class ChatViewModel(
                 _messages.clear()
                 _messages.addAll(messages)
                 currentSessionId = sessionId
+                
+                // 从会话列表中找到对应的会话标题
+                _chatSessions.value.find { it.id == sessionId }?.let { session ->
+                    _currentTitle.value = session.title
+                }
             }
         }
     }
@@ -172,8 +181,9 @@ class ChatViewModel(
     // 创建新会话
     fun createNewChat() {
         _messages.clear()
+        _currentTitle.value = "新对话"
         viewModelScope.launch {
-            currentSessionId = dbManager.createChatSession("新会话")
+            currentSessionId = dbManager.createChatSession("新对话")
         }
     }
 
