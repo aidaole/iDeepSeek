@@ -1,6 +1,7 @@
 package com.aidaole.ideepseek.home
 
 import android.app.Application
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +54,7 @@ import com.aidaole.ideepseek.db.ChatDatabaseManager
 import com.aidaole.ideepseek.db.ChatSession
 import com.aidaole.ideepseek.db.DatabaseDriverFactory
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
 
 @Preview("HomePage")
 @Composable
@@ -66,8 +68,17 @@ fun AppPreview() {
 
 @Composable
 fun HomePage(viewModel: ChatViewModel) {
-    // 收集 UI 状态
+    val context = LocalContext.current
     val tokenState by viewModel.tokenState.collectAsState()
+    val toastMessage by viewModel.toastMessage.collectAsState()
+
+    // 处理Toast消息
+    LaunchedEffect(toastMessage) {
+        toastMessage?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.clearToast()
+        }
+    }
 
     // 只在需要 Token 时显示对话框
     if (tokenState is ChatViewModel.TokenState.NeedToken) {

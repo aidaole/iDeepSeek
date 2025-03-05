@@ -34,6 +34,9 @@ class ChatViewModel(
     private val _currentTitle = MutableStateFlow<String>("新对话")
     val currentTitle: StateFlow<String> = _currentTitle.asStateFlow()
 
+    private val _toastMessage = MutableStateFlow<String?>(null)
+    val toastMessage: StateFlow<String?> = _toastMessage.asStateFlow()
+
     private var currentSessionId = 0L
 
     init {
@@ -69,14 +72,14 @@ class ChatViewModel(
                         _messages.clear()
                     } else {
                         // 如果有消息，创建新会话
-                        createNewChat()
+                        createNewChatInternal()
                     }
                     // 只需要收集一次，然后取消收集
                     this.cancel()
                 }
             } else {
                 // 如果没有任何会话，创建新会话
-                createNewChat()
+                createNewChatInternal()
             }
         }
     }
@@ -190,12 +193,27 @@ class ChatViewModel(
     }
 
     // 创建新会话
-    fun createNewChat() {
+    private fun createNewChatInternal() {
         _messages.clear()
         _currentTitle.value = "新对话"
         viewModelScope.launch {
             currentSessionId = dbManager.createChatSession("新对话")
         }
+    }
+
+    // 用户手动创建新会话
+    fun createNewChat() {
+        // 只有在用户手动点击新建，且当前会话为空时才提示
+        if (_messages.isEmpty()) {
+            _toastMessage.value = "当前已经是新会话"
+            return
+        }
+        createNewChatInternal()
+    }
+
+    // 清除Toast消息
+    fun clearToast() {
+        _toastMessage.value = null
     }
 
     sealed class TokenState {
