@@ -108,8 +108,8 @@ class ChatViewModel(
                     _currentTitle.value = title
                 }
 
-                // 添加一个空的 AI 消息用于流式更新
-                val aiMessage = ChatMessage("", isUser = false)
+                // 添加一个空的 AI 消息用于流式更新，设置loading状态为true
+                val aiMessage = ChatMessage("", isUser = false, isLoading = true)
                 _messages.add(aiMessage)
 
                 // 构建消息历史
@@ -117,28 +117,39 @@ class ChatViewModel(
 
                 Log.d(TAG, "sendMessage: $content")
 
-                // 调用流式 API
-                api.chatStream(
-                    currentSessionId,
-                    model = if (!isDeepThink) "deepseek-chat" else "deepseek-reasoner",
-                    messages = apiMessages,
-                    onResponse = { streamResponse ->
-                        val content = streamResponse.choices.firstOrNull()?.delta?.content
-                        val reasoningContent =
-                            streamResponse.choices.firstOrNull()?.delta?.reasoningContent
-                        if (content != null) {
-                            // 更新最后一条 AI 消息
-                            val lastIndex = _messages.lastIndex
-                            _messages[lastIndex] = _messages[lastIndex].copy(
-                                content = _messages[lastIndex].content + content
-                            )
-                        } else if (reasoningContent != null) {
-                            val lastIndex = _messages.lastIndex
-                            _messages[lastIndex] = _messages[lastIndex].copy(
-                                content = _messages[lastIndex].content + reasoningContent
-                            )
-                        }
-                    })
+                try {
+                    // 调用流式 API
+                    api.chatStream(
+                        currentSessionId,
+                        model = if (!isDeepThink) "deepseek-chat" else "deepseek-reasoner",
+                        messages = apiMessages,
+                        onResponse = { streamResponse ->
+                            val content = streamResponse.choices.firstOrNull()?.delta?.content
+                            val reasoningContent =
+                                streamResponse.choices.firstOrNull()?.delta?.reasoningContent
+                            if (content != null) {
+                                // 更新最后一条 AI 消息，保持loading状态
+                                val lastIndex = _messages.lastIndex
+                                _messages[lastIndex] = _messages[lastIndex].copy(
+                                    content = _messages[lastIndex].content + content
+                                )
+                            } else if (reasoningContent != null) {
+                                val lastIndex = _messages.lastIndex
+                                _messages[lastIndex] = _messages[lastIndex].copy(
+                                    content = _messages[lastIndex].content + reasoningContent
+                                )
+                            }
+                        })
+                    
+                    // API调用完成后，更新最后一条消息的loading状态为false
+                    val lastIndex = _messages.lastIndex
+                    _messages[lastIndex] = _messages[lastIndex].copy(isLoading = false)
+                } catch (e: Exception) {
+                    // 发生错误时，也需要更新loading状态
+                    val lastIndex = _messages.lastIndex
+                    _messages[lastIndex] = _messages[lastIndex].copy(isLoading = false)
+                    throw e
+                }
             } catch (e: Exception) {
                 _tokenState.value = TokenState.Error("发送消息失败: ${e.message}")
             }

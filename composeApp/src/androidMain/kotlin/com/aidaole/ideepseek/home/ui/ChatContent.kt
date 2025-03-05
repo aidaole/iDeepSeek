@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -103,10 +104,23 @@ fun ChatMessageItem(message: ChatMessage) {
                 )
                 .padding(12.dp)
         ) {
-            Text(
-                text = message.content,
-                color = Color.Black
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = message.content,
+                    color = Color.Black,
+                    modifier = Modifier.weight(1f, false)
+                )
+                if (!message.isUser && message.isLoading && message.content.isEmpty()) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = Color(0xFF2196F3)
+                    )
+                }
+            }
         }
     }
 }
