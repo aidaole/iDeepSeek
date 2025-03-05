@@ -3,16 +3,12 @@ package com.aidaole.ideepseek.api
 import com.aidaole.ideepseek.db.ChatDatabaseManager
 import com.aidaole.ideepseek.db.DatabaseDriverFactory
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.header
 import io.ktor.client.request.headers
-import io.ktor.client.request.post
 import io.ktor.client.request.preparePost
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.http.contentType
 import kotlinx.serialization.json.Json
 
 class CommonDeepSeekApi(
@@ -49,14 +45,9 @@ class CommonDeepSeekApi(
         onResponse: (DeepSeekApi.StreamResponse) -> Unit
     ) {
         // 如果是新对话（没有当前会话ID），才创建新的会话
-        var sessionId = currentSessionId
-        println("sessionId: $sessionId")
-        if(dbManager.getSessionList().filter { it.id == sessionId }.isEmpty()) {
-            dbManager.createChatSession("session:$sessionId")
-            println("insert sessionId: $sessionId")
-        }
+        println("sessionId: $currentSessionId")
 
-        dbManager.addMessage(sessionId, messages.last().role, messages.last().content)
+        dbManager.addMessage(currentSessionId, messages.last().role, messages.last().content)
         val token = tokenManager.getToken() ?: throw IllegalStateException("API Token not set")
 
         val request = DeepSeekApi.ChatRequest(
@@ -90,7 +81,7 @@ class CommonDeepSeekApi(
                             val json = content.substring(6).trim()
                             if (json == "[DONE]") {
                                 // 当对话完成时保存完整的助手回复
-                                dbManager.addMessage(sessionId, "assistant", assistantMessage.toString())
+                                dbManager.addMessage(currentSessionId, "assistant", assistantMessage.toString())
                                 break
                             }
                             try {

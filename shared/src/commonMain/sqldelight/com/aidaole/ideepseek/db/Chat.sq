@@ -41,6 +41,12 @@ deleteChatSession:
 DELETE FROM ChatSession
 WHERE id = ?;
 
+-- 更新会话标题
+updateSessionTitle:
+UPDATE ChatSession
+SET title = ?
+WHERE id = ?;
+
 -- 获取最后插入的行ID
 lastInsertRowId:
 SELECT last_insert_rowid(); 

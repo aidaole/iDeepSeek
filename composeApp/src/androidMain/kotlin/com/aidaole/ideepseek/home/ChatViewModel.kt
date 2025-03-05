@@ -98,6 +98,12 @@ class ChatViewModel(
                 val userMessage = ChatMessage(content = content, isUser = true)
                 _messages.add(userMessage)
 
+                // 如果是第一条消息，更新会话标题
+                if (_messages.size == 1) {
+                    val title = content.take(10) + if (content.length > 10) "..." else ""
+                    dbManager.updateSessionTitle(currentSessionId, title)
+                }
+
                 // 添加一个空的 AI 消息用于流式更新
                 val aiMessage = ChatMessage("", isUser = false)
                 _messages.add(aiMessage)

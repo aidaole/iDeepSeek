@@ -44,4 +44,8 @@ class ChatDatabaseManager(databaseDriverFactory: DatabaseDriverFactory) {
     suspend fun deleteChatSession(sessionId: Long) = withContext(Dispatchers.Default) {
         dbQuery.deleteChatSession(sessionId)
     }
+
+    suspend fun updateSessionTitle(sessionId: Long, title: String) = withContext(Dispatchers.Default) {
+        dbQuery.updateSessionTitle(title, sessionId)
+    }
 } 
