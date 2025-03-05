@@ -19,7 +19,7 @@ class CommonDeepSeekApi(
     private val tokenManager: TokenManager,
     private val httpClient: HttpClient,
     private val dbFactory: DatabaseDriverFactory
-): DeepSeekApi {
+) : DeepSeekApi {
     private val apiUrl = "https://api.deepseek.com/v1/chat/completions"
     private val customJson = Json {
         ignoreUnknownKeys = true
@@ -49,11 +49,13 @@ class CommonDeepSeekApi(
         onResponse: (DeepSeekApi.StreamResponse) -> Unit
     ) {
         // 如果是新对话（没有当前会话ID），才创建新的会话
-        val sessionId = if (currentSessionId == 0L) {
-            dbManager.getSessionList().size.toLong()
-        } else {
-            currentSessionId
+        var sessionId = currentSessionId
+        println("sessionId: $sessionId")
+        if(dbManager.getSessionList().filter { it.id == sessionId }.isEmpty()) {
+            dbManager.createChatSession("session:$sessionId")
+            println("insert sessionId: $sessionId")
         }
+
         dbManager.addMessage(sessionId, messages.last().role, messages.last().content)
         val token = tokenManager.getToken() ?: throw IllegalStateException("API Token not set")
 

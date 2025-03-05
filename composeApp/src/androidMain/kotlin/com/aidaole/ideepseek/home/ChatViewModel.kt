@@ -1,12 +1,13 @@
 package com.aidaole.ideepseek.home
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aidaole.ideepseek.api.DeepSeekApi
-import com.aidaole.ideepseek.api.CommonDeepSeekApi
 import com.aidaole.ideepseek.db.ChatDatabaseManager
 import com.aidaole.ideepseek.db.ChatSession
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -51,6 +52,30 @@ class ChatViewModel(
                 _chatSessions.value = sessions
             }
         }
+
+        viewModelScope.launch {
+            // 获取最后一个会话
+            val sessions = dbManager.getSessionList()
+            if (sessions.isNotEmpty()) {
+                val lastSession = sessions.first() // 因为按时间倒序，第一个就是最新的
+                // 检查最后一个会话是否有消息
+                dbManager.getSessionMessages(lastSession.id).collect { chatMessages ->
+                    if (chatMessages.isEmpty()) {
+                        // 如果最后一个会话没有消息，直接使用它
+                        currentSessionId = lastSession.id
+                        _messages.clear()
+                    } else {
+                        // 如果有消息，创建新会话
+                        createNewChat()
+                    }
+                    // 只需要收集一次，然后取消收集
+                    this.cancel()
+                }
+            } else {
+                // 如果没有任何会话，创建新会话
+                createNewChat()
+            }
+        }
     }
 
     fun setApiToken(token: String) {
@@ -79,6 +104,8 @@ class ChatViewModel(
 
                 // 构建消息历史
                 val apiMessages = buildMessageHistory()
+
+                Log.d(TAG, "sendMessage: $content")
 
                 // 调用流式 API
                 api.chatStream(
@@ -127,8 +154,9 @@ class ChatViewModel(
         viewModelScope.launch {
             dbManager.getSessionMessages(sessionId).collect { chatMessages ->
                 val messages = chatMessages.map {
-                    ChatMessage(it.content, it.role=="user")
+                    ChatMessage(it.content, it.role == "user")
                 }
+                _messages.clear()
                 _messages.addAll(messages)
                 currentSessionId = sessionId
             }
@@ -138,10 +166,9 @@ class ChatViewModel(
     // 创建新会话
     fun createNewChat() {
         _messages.clear()
-//        viewModelScope.launch {
-//            currentSessionId = dbManager.getSessionList().size.toLong()
-//        }
-        currentSessionId = 0L
+        viewModelScope.launch {
+            currentSessionId = dbManager.createChatSession("新会话")
+        }
     }
 
     sealed class TokenState {
