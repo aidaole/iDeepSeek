@@ -1,5 +1,6 @@
 package com.aidaole.ideepseek.home.ui
 
+import android.widget.TextView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
@@ -17,9 +18,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.aidaole.ideepseek.home.ChatMessage
+import io.noties.markwon.Markwon
+import io.noties.markwon.ext.strikethrough.StrikethroughPlugin
+import io.noties.markwon.ext.tables.TablePlugin
+import io.noties.markwon.html.HtmlPlugin
+import io.noties.markwon.linkify.LinkifyPlugin
+import io.noties.markwon.syntax.Prism4jTheme
+import io.noties.markwon.syntax.SyntaxHighlightPlugin
+import io.noties.prism4j.Prism4j
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -84,6 +95,19 @@ fun ChatContent(
 
 @Composable
 fun ChatMessageItem(message: ChatMessage) {
+    val context = LocalContext.current
+    
+    // 创建Markwon实例
+    val markwon = remember {
+        Markwon.builder(context)
+            .usePlugin(StrikethroughPlugin.create())
+            .usePlugin(TablePlugin.create(context))
+            .usePlugin(HtmlPlugin.create())
+            .usePlugin(LinkifyPlugin.create())
+//            .usePlugin(SyntaxHighlightPlugin.create(Prism4j(), Prism4jTheme()))
+            .build()
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = if (message.isUser) Alignment.End else Alignment.Start
@@ -108,11 +132,28 @@ fun ChatMessageItem(message: ChatMessage) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text(
-                    text = message.content,
-                    color = Color.Black,
-                    modifier = Modifier.weight(1f, false)
-                )
+                if (message.isUser) {
+                    // 用户消息使用普通Text
+                    Text(
+                        text = message.content,
+                        color = Color.Black,
+                        modifier = Modifier.weight(1f, false)
+                    )
+                } else {
+                    // AI消息使用Markdown
+                    AndroidView(
+                        modifier = Modifier.weight(1f, false),
+                        factory = { context ->
+                            TextView(context).apply {
+                                setTextColor(android.graphics.Color.BLACK)
+                            }
+                        },
+                        update = { textView ->
+                            markwon.setMarkdown(textView, message.content)
+                        }
+                    )
+                }
+                
                 if (!message.isUser && message.isLoading && message.content.isEmpty()) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
