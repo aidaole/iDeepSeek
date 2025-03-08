@@ -6,6 +6,15 @@
 
 iDeepSeek 是一个使用现代技术栈开发的跨平台聊天应用，通过接入 DeepSeek API 实现智能对话功能。项目采用 Kotlin Multiplatform (KMP) 开发，实现了 Android 和 iOS 平台的代码共享。
 
+功能展示
+
+https://github.com/user-attachments/assets/69041827-ccd6-46f9-aec1-0c0f94011b97
+
+
+https://github.com/user-attachments/assets/674a7d07-1a75-456f-97b3-a951eaf2c877
+
+
+
 ## 主要功能
 
 - 基础聊天：支持与 AI 进行自然对话
