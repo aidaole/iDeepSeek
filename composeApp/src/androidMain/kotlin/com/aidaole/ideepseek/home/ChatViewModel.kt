@@ -216,6 +216,39 @@ class ChatViewModel(
         _toastMessage.value = null
     }
 
+    // 删除会话
+    fun deleteChatSession(sessionId: Long) {
+        viewModelScope.launch {
+            try {
+                dbManager.deleteChatSession(sessionId)
+                // 如果删除的是当前会话，创建新会话
+                if (sessionId == currentSessionId) {
+                    createNewChatInternal()
+                }
+            } catch (e: Exception) {
+                _toastMessage.value = "删除会话失败: ${e.message}"
+            }
+        }
+    }
+
+    // 重命名会话
+    fun renameChatSession(sessionId: Long, newTitle: String) {
+        if (newTitle.isBlank()) {
+            _toastMessage.value = "标题不能为空"
+            return
+        }
+        viewModelScope.launch {
+            try {
+                dbManager.updateSessionTitle(sessionId, newTitle)
+                if (sessionId == currentSessionId) {
+                    _currentTitle.value = newTitle
+                }
+            } catch (e: Exception) {
+                _toastMessage.value = "重命名会话失败: ${e.message}"
+            }
+        }
+    }
+
     sealed class TokenState {
         data object Initial : TokenState()
         data object NeedToken : TokenState()

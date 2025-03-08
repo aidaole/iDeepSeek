@@ -4,6 +4,7 @@ import android.app.Application
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,6 +33,7 @@ import androidx.compose.material.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,6 +57,13 @@ import com.aidaole.ideepseek.db.ChatSession
 import com.aidaole.ideepseek.db.DatabaseDriverFactory
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.TextField
+import androidx.compose.material.TextButton
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.runtime.CompositionLocalProvider
 
 @Preview("HomePage")
 @Composable
@@ -149,80 +158,82 @@ private fun DrawerContent(
     viewModel: ChatViewModel,
     onClose: () -> Unit
 ) {
-    // 添加对话框显示状态
-    var showTokenDialog by remember { mutableStateOf(false) }
+    CompositionLocalProvider(LocalViewModel provides viewModel) {
+        // 添加对话框显示状态
+        var showTokenDialog by remember { mutableStateOf(false) }
 
-    // 如果showTokenDialog为true，显示对话框
-    if (showTokenDialog) {
-        TokenInputDialog(
-            onTokenSubmit = { token ->
-                viewModel.setApiToken(token)
-                showTokenDialog = false  // 提交后关闭对话框
-            },
-            onDismiss = {
-                showTokenDialog = false  // 关闭对话框
-            }
-        )
-    }
-    val chatSessions by viewModel.chatSessions.collectAsState(initial = emptyList())
-
-    Column(
-        modifier = Modifier
-            .fillMaxHeight()
-            .background(Color.White)
-    ) {
-        // 抽屉头部
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "历史聊天记录",
-                style = MaterialTheme.typography.body1,
-                color = Color.Black
+        // 如果showTokenDialog为true，显示对话框
+        if (showTokenDialog) {
+            TokenInputDialog(
+                onTokenSubmit = { token ->
+                    viewModel.setApiToken(token)
+                    showTokenDialog = false  // 提交后关闭对话框
+                },
+                onDismiss = {
+                    showTokenDialog = false  // 关闭对话框
+                }
             )
-            IconButton(onClick = onClose) {
-                Icon(
-                    Icons.Default.Close,
-                    contentDescription = "关闭",
-                    tint = Color.Black
-                )
-            }
         }
+        val chatSessions by viewModel.chatSessions.collectAsState(initial = emptyList())
 
-        Divider(
-            modifier = Modifier.padding(vertical = 8.dp),
-            color = Color.LightGray
-        )
-
-        LazyColumn(
+        Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
+                .fillMaxHeight()
+                .background(Color.White)
         ) {
-            items(chatSessions) { session ->
-                ChatSessionItem(
-                    session = session,
-                    onClick = {
-                        viewModel.loadChatSession(session.id)
-                        onClose()
-                    }
+            // 抽屉头部
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "历史聊天记录",
+                    style = MaterialTheme.typography.body1,
+                    color = Color.Black
                 )
+                IconButton(onClick = onClose) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "关闭",
+                        tint = Color.Black
+                    )
+                }
             }
-        }
-        
-        DrawerMenuItem(
-            icon = Icons.Default.Info,
-            text = "输入apikey",
-            onClick = {
-                showTokenDialog = true  // 点击时显示对话框
-            }
-        )
 
-        Spacer(modifier = Modifier.height(30.dp))
+            Divider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = Color.LightGray
+            )
+
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                items(chatSessions) { session ->
+                    ChatSessionItem(
+                        session = session,
+                        onClick = {
+                            viewModel.loadChatSession(session.id)
+                            onClose()
+                        }
+                    )
+                }
+            }
+            
+            DrawerMenuItem(
+                icon = Icons.Default.Info,
+                text = "输入apikey",
+                onClick = {
+                    showTokenDialog = true  // 点击时显示对话框
+                }
+            )
+
+            Spacer(modifier = Modifier.height(30.dp))
+        }
     }
 }
 
@@ -231,10 +242,30 @@ private fun ChatSessionItem(
     session: ChatSession,
     onClick: () -> Unit
 ) {
+    var showDropdownMenu by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf(false) }
+    val viewModel = LocalViewModel.current
+
+    if (showRenameDialog) {
+        RenameDialog(
+            initialTitle = session.title,
+            onConfirm = { newTitle ->
+                viewModel.renameChatSession(session.id, newTitle)
+                showRenameDialog = false
+            },
+            onDismiss = { showRenameDialog = false }
+        )
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onTap = { onClick() },
+                    onLongPress = { showDropdownMenu = true }
+                )
+            }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -243,10 +274,73 @@ private fun ChatSessionItem(
             style = MaterialTheme.typography.body1,
             color = Color.Black,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
         )
+
+        DropdownMenu(
+            expanded = showDropdownMenu,
+            onDismissRequest = { showDropdownMenu = false }
+        ) {
+            DropdownMenuItem(
+                onClick = {
+                    showRenameDialog = true
+                    showDropdownMenu = false
+                }
+            ) {
+                Text("重命名")
+            }
+            DropdownMenuItem(
+                onClick = {
+                    viewModel.deleteChatSession(session.id)
+                    showDropdownMenu = false
+                }
+            ) {
+                Text("删除")
+            }
+        }
     }
 }
+
+@Composable
+private fun RenameDialog(
+    initialTitle: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var newTitle by remember { mutableStateOf(initialTitle) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("重命名会话") },
+        text = {
+            TextField(
+                value = newTitle,
+                onValueChange = { newTitle = it },
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (newTitle.isNotBlank()) {
+                        onConfirm(newTitle)
+                    }
+                }
+            ) {
+                Text("确定")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("取消")
+            }
+        }
+    )
+}
+
+// 添加 CompositionLocal 用于在组件树中传递 ViewModel
+private val LocalViewModel = compositionLocalOf<ChatViewModel> { error("No ChatViewModel provided") }
 
 @Composable
 private fun DrawerMenuItem(
